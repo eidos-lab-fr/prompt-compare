@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt Compare</title>
+<style>:root{--bg:#f7f7f5;--panel:#fff;--ink:#1c1c1a;--muted:#6b6b66;--line:#e3e3de;--accent:#3d5afe;--accent-ink:#fff;--good:#1a7f4b;--bad:#b3261e;--warn:#9a6700;--soft:#eef0ff;--radius:10px;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141413;--panel:#1d1d1b;--ink:#ececE6;--muted:#9a9a93;--line:#30302c;--accent:#8c9eff;--accent-ink:#11122b;--good:#5fd39a;--bad:#ff8a80;--warn:#e3b341;--soft:#23264a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1080px;margin:0 auto;padding:28px 16px 64px}
+header.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{font-size:24px;margin:0;letter-spacing:-.01em}
+h2{font-size:15px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+p.lead{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:16px}
+@media(min-width:820px){.cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:repeat(3,1fr)}.side{grid-template-columns:340px 1fr}}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{min-height:120px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.field{margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.ghost{border-color:transparent;color:var(--muted);padding:4px 8px}
+button:disabled{opacity:.5;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td input{padding:5px 7px}
+.scroll{overflow-x:auto}
+.stat{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0}
+.muted{color:var(--muted)}.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.tag{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--accent)}
+.out{white-space:pre-wrap;word-wrap:break-word;font-size:14.5px;min-height:120px}
+.out.mono,code{font-family:var(--mono);font-size:13px}
+.note{font-size:13px;color:var(--muted)}
+footer{margin-top:28px;font-size:13px;color:var(--muted)}
+footer a{color:inherit}
+
+.case{border-top:1px solid var(--line);padding-top:14px;margin-top:14px}
+.case:first-child{border-top:0;margin-top:0;padding-top:0}
+.pair{display:grid;gap:12px}
+@media(min-width:820px){.pair{grid-template-columns:1fr 1fr}}
+.cell{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+.cell .out{min-height:60px}
+.input{font-family:var(--mono);font-size:13px;white-space:pre-wrap;color:var(--muted);margin:0 0 10px}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div>
+      <h1>Prompt Compare</h1>
+      <p class="lead">Run two system prompts, or two models, on the same inputs and read the answers side by side with their speed and cost.</p>
+    </div>
+  </header>
+
+  <section class="panel" aria-label="API settings">
+    <div class="grid cols-2">
+      <div><label for="apiKey">Anthropic API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…"></div>
+      <div><label>&nbsp;</label><label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-size:14px"><input id="rememberKey" type="checkbox" style="width:auto"> Remember the key on this device</label></div>
+    </div>
+    <p class="note" style="margin:10px 0 0">Your key stays in this browser and is sent only to api.anthropic.com. This page has no server. Each run calls the API once per input and per side: use a key with a spending limit.</p>
+  </section>
+
+  <div class="grid cols-2">
+    <section class="panel">
+      <h2>Variant A</h2>
+      <div class="field"><label for="modelA">Model</label><select id="modelA" data-models></select></div>
+      <div class="field"><label for="promptA">System prompt</label><textarea id="promptA" style="min-height:160px">You are a support assistant for a project management app. Answer the customer's question.</textarea></div>
+    </section>
+    <section class="panel">
+      <h2>Variant B</h2>
+      <div class="field"><label for="modelB">Model</label><select id="modelB" data-models></select></div>
+      <div class="field"><label for="promptB">System prompt</label><textarea id="promptB" style="min-height:160px">You are a support assistant for a project management app. Answer in three sentences at most. If the answer depends on the customer's plan, ask which plan they are on instead of guessing.</textarea></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Test inputs</h2>
+    <div class="field"><label for="inputs">User messages to test. Separate them with a line containing only ---</label>
+      <textarea id="inputs" style="min-height:130px">How do I invite my team?
+---
+Can I export a project to PDF?
+---
+Your app deleted my project. I want a refund.</textarea></div>
+    <div class="row">
+      <button id="run" class="primary">Run comparison</button>
+      <button id="csv" disabled>Export CSV</button>
+      <span id="status" class="note" role="status"></span>
+    </div>
+  </section>
+
+  <section class="panel" id="summaryPanel" hidden>
+    <h2>Summary</h2>
+    <div class="scroll"><table>
+      <thead><tr><th></th><th class="num">Avg. first token</th><th class="num">Avg. total time</th><th class="num">Output tokens</th><th class="num">Total cost</th></tr></thead>
+      <tbody id="summary"></tbody>
+    </table></div>
+    <p class="note" style="margin-bottom:0">Speed and cost are measured. Quality is yours to judge: read the answers below. Costs are estimates from list prices.</p>
+  </section>
+
+  <section class="panel" id="resultsPanel" hidden><h2>Answers</h2><div id="results"></div></section>
+  <footer>MIT license · © 2026 Eidos Lab · Runs entirely in your browser.</footer>
+</main>
+<script type="module">
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@1.8.0";
+
+// Prices in USD per million tokens, used for the cost estimate only.
+const MODELS = {
+  "claude-opus-5-5": { label: "Claude Opus 5.5", input: 4, output: 20 },
+  "claude-sonnet-5-5": { label: "Claude Sonnet 5.5", input: 2, output: 10 },
+  "claude-haiku-5-5": { label: "Claude Haiku 5.5", input: 0.1, output: 0.5 },
+};
+const KEY_NAME = "anthropic-api-key";
+const $ = (id) => document.getElementById(id);
+
+function readKey() {
+  try { return sessionStorage.getItem(KEY_NAME) || localStorage.getItem(KEY_NAME) || ""; } catch { return ""; }
+}
+function saveKey(value, remember) {
+  try {
+    sessionStorage.setItem(KEY_NAME, value);
+    if (remember) localStorage.setItem(KEY_NAME, value); else localStorage.removeItem(KEY_NAME);
+  } catch { /* storage unavailable: the key lives in the input only */ }
+}
+
+// Wires the key bar that every page includes.
+function initKeyBar() {
+  const input = $("apiKey"), remember = $("rememberKey");
+  input.value = readKey();
+  try { remember.checked = !!localStorage.getItem(KEY_NAME); } catch { /* ignore */ }
+  const persist = () => saveKey(input.value.trim(), remember.checked);
+  input.addEventListener("change", persist);
+  remember.addEventListener("change", persist);
+  for (const select of document.querySelectorAll("select[data-models]")) {
+    select.innerHTML = Object.entries(MODELS).map(([id, m]) => `<option value="${id}">${m.label}</option>`).join("");
+  }
+}
+
+function estimateCost(model, usage) {
+  const price = MODELS[model];
+  if (!price || !usage) return 0;
+  return (usage.input_tokens * price.input + usage.output_tokens * price.output) / 1e6;
+}
+
+function explain(error) {
+  if (error instanceof Anthropic.AuthenticationError) return "The API key was rejected. Check it and try again.";
+  if (error instanceof Anthropic.PermissionDeniedError) return "This API key is not allowed to use that model.";
+  if (error instanceof Anthropic.RateLimitError) return "Rate limit reached. Wait a moment and try again.";
+  if (error instanceof Anthropic.BadRequestError) return "The request was refused: " + error.message;
+  if (error instanceof Anthropic.APIConnectionError) return "Could not reach the Anthropic API. Check your connection.";
+  if (error instanceof Anthropic.APIError) return `API error ${error.status ?? ""}: ${error.message}`;
+  return error?.message || String(error);
+}
+
+/**
+ * Streams one request to Claude, straight from the browser with the visitor's own key.
+ * Returns { text, usage, model, ms, firstTokenMs, cost, note }.
+ */
+async function runClaude({ model, system, user, onText }) {
+  const apiKey = $("apiKey").value.trim();
+  if (!apiKey) throw new Error("Add your Anthropic API key first.");
+  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  const params = { model, max_tokens: 64000, system, messages: [{ role: "user", content: user }] };
+  const started = performance.now();
+  let firstTokenMs = null, text = "";
+  try {
+    // Opus and Sonnet can decline a request: let the API retry on a fallback model.
+    const stream = model === "claude-haiku-5-5"
+      ? client.messages.stream(params)
+      : client.beta.messages.stream({ ...params, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+    stream.on("text", (delta) => {
+      if (firstTokenMs === null) firstTokenMs = performance.now() - started;
+      text += delta;
+      onText?.(delta, text);
+    });
+    const message = await stream.finalMessage();
+    let note = "";
+    if (message.stop_reason === "refusal") note = "The model declined this request.";
+    else if (message.stop_reason === "max_tokens") note = "The answer was cut off at the length limit.";
+    return {
+      text, note, usage: message.usage, model: message.model,
+      ms: performance.now() - started, firstTokenMs,
+      cost: estimateCost(model, message.usage),
+    };
+  } catch (error) {
+    throw new Error(explain(error));
+  }
+}
+
+function download(name, content, type = "text/plain") {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+}
+
+initKeyBar();
+$("modelB").value = $("modelA").value;
+
+let runs = [];
+const secs = (ms) => (ms == null ? "–" : (ms / 1000).toFixed(1) + " s");
+
+function cell(label) {
+  const box = document.createElement("div"); box.className = "cell";
+  const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = label;
+  const out = document.createElement("div"); out.className = "out"; out.textContent = "…";
+  const meta = document.createElement("p"); meta.className = "note"; meta.style.margin = "8px 0 0";
+  box.append(tag, out, meta);
+  return { box, out, meta };
+}
+
+async function runSide(side, input, ui) {
+  const model = $("model" + side).value;
+  try {
+    const r = await runClaude({ model, system: $("prompt" + side).value, user: input, onText: (_d, text) => { ui.out.textContent = text; } });
+    ui.out.textContent = r.text || "(empty answer)";
+    ui.meta.textContent = `${r.note ? r.note + " " : ""}first token ${secs(r.firstTokenMs)} · total ${secs(r.ms)} · ${r.usage.output_tokens} tokens out · $${r.cost.toFixed(4)}`;
+    return { side, input, model, ok: true, ...r };
+  } catch (error) {
+    ui.out.textContent = ""; ui.meta.textContent = error.message; ui.meta.classList.add("bad");
+    return { side, input, model, ok: false, error: error.message };
+  }
+}
+
+function summarize() {
+  const body = $("summary"); body.innerHTML = "";
+  for (const side of ["A", "B"]) {
+    const ok = runs.filter((r) => r.side === side && r.ok);
+    const avg = (key) => (ok.length ? ok.reduce((s, r) => s + (r[key] ?? 0), 0) / ok.length : null);
+    const tr = document.createElement("tr");
+    const cells = [`Variant ${side} · ${ok[0]?.model ?? $("model" + side).value}`, secs(avg("firstTokenMs")), secs(avg("ms")),
+      ok.reduce((s, r) => s + r.usage.output_tokens, 0).toLocaleString("en-US"), "$" + ok.reduce((s, r) => s + r.cost, 0).toFixed(4)];
+    cells.forEach((text, i) => { const td = document.createElement("td"); if (i) td.className = "num"; td.textContent = text; tr.append(td); });
+    body.append(tr);
+  }
+}
+
+$("run").addEventListener("click", async () => {
+  const inputs = $("inputs").value.split(/^\s*---\s*$/m).map((s) => s.trim()).filter(Boolean);
+  if (!$("apiKey").value.trim()) { $("status").textContent = "Add your Anthropic API key first."; return; }
+  if (!inputs.length) { $("status").textContent = "Add at least one test input."; return; }
+  if (inputs.length > 10 && !confirm(`This will make ${inputs.length * 2} API calls. Continue?`)) return;
+  $("run").disabled = true; $("csv").disabled = true; runs = [];
+  $("resultsPanel").hidden = false; $("summaryPanel").hidden = true;
+  const results = $("results"); results.innerHTML = "";
+  // One input at a time, both variants in parallel, so the two sides share the same conditions.
+  for (let i = 0; i < inputs.length; i++) {
+    $("status").textContent = `Running input ${i + 1} of ${inputs.length}…`;
+    const block = document.createElement("div"); block.className = "case";
+    const pre = document.createElement("p"); pre.className = "input"; pre.textContent = inputs[i];
+    const pair = document.createElement("div"); pair.className = "pair";
+    const a = cell("A"), b = cell("B"); pair.append(a.box, b.box); block.append(pre, pair); results.append(block);
+    runs.push(...await Promise.all([runSide("A", inputs[i], a), runSide("B", inputs[i], b)]));
+  }
+  const failed = runs.filter((r) => !r.ok).length;
+  $("status").textContent = failed ? `Done, with ${failed} failed call${failed > 1 ? "s" : ""}.` : "Done.";
+  $("summaryPanel").hidden = false; summarize();
+  $("run").disabled = false; $("csv").disabled = false;
+});
+
+$("csv").addEventListener("click", () => {
+  const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["Variant", "Model", "Input", "Output", "First token (ms)", "Total (ms)", "Input tokens", "Output tokens", "Cost (USD)", "Error"]];
+  runs.forEach((r) => rows.push([r.side, r.model, r.input, r.text ?? "", r.ok ? Math.round(r.firstTokenMs ?? 0) : "", r.ok ? Math.round(r.ms) : "", r.usage?.input_tokens ?? "", r.usage?.output_tokens ?? "", r.ok ? r.cost.toFixed(6) : "", r.error ?? ""]));
+  download("prompt-comparison.csv", rows.map((r) => r.map(q).join(",")).join("\n"), "text/csv");
+});
+</script>
+</body>
+</html>
