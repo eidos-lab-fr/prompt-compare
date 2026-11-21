@@ -2,7 +2,7 @@
 
 Run two system prompts or two Claude models on the same inputs and compare answers, speed and cost.
 
-**[Website](https://eidos-lab-fr.github.io/prompt-compare/about.html)** · **[Open the app](https://eidos-lab-fr.github.io/prompt-compare/)**
+**[Website](https://eidoslab.fr/prompt-compare)** · **[Open the app](https://eidos-lab-fr.github.io/prompt-compare/)**
 
 ## Features
 
